@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{% endblock %}
+
+{% block body %}
+
+<!-- Source Javascript -->
+<script>
+    $(document).ready(function() {
+
+        /**
+         Initialize local variables
+        */
+        var $sortBy = "workers"
+        var $tableRows = $('.table-select'); 
+        var $selectedTest = ""
+        var current_page = 1;
+        var records_per_page = 5;
+
+        // Get list of tests from Flask as JSON
+        var list = {{ tests|tojson }};
+
+        window.onload = function() {
+            // Paginate
+            changePage(1)
+
+            // Initialize view test header
+            document.getElementById("view-test").innerHTML = "Select Test"
+            
+            // Initialize unfinished test end time
+            list.forEach(iterate)
+        }
+
+        /**
+        * More convenient page refresh
+        */ 
+        $('#table-refresh').click(function(e) {
+            window.location.reload(false)
+        });
+
+        /**
+        * Highlight a selected a table row
+        */ 
+        $('.table-select').click(function(e) {
+            $tableRows.removeClass('selected');
+            $(this).addClass('selected');
+            $selectedTest = $(this).find('th:first').text()
+            document.getElementById("view-test").innerHTML =  "View Test " + $selectedTest
+            view = document.getElementById("view-summary")
+            view.style.opacity = 1
+            view = document.getElementById("graphs-id")
+            view.style.opacity = 1
+        });
+
+        /**
+        * Sort rows based on selected dropdown item
+        */  
+        $(".dropdown-menu a").click(function(){
+            console.log($sortBy)
+            if (this.id !== undefined)
+                $sortBy = this.id;
+
+            $(".dropdown-toggle:first-child").text($(this).text());
+            $(".dropdown-toggle:first-child").val($(this).text());
+            
+            if ($sortBy === "start") {
+                list.sort(function(a, b) {
+                    a = new Date(a.start);
+                    b = new Date(b.start);
+                    return a < b ? -1 : a > b ? 1 : 0;
+                });
+            } else if ($sortBy === "workers") {
+                list.sort((a, b) => b.workers - a.workers);
+            } else if ($sortBy === "id") {
+                list.sort((a, b) => b.id - a.id);
+            }
+
+            list.forEach(iterate)
+        });
+        
+        // View test-specific information page
+        $("#view-summary").click(function() {
+            console.log("view sum")
+            window.open("http://localhost:5000/tests/" + $selectedTest, "_self")
+        });
+
+        // Visualize Tests navigates to /graphs/
+        $("#graphs-id").click(function() {
+            console.log("view graphs")
+            window.open("http://localhost:5000/graphs?test=" + $selectedTest, "_self")
+        });
+
+        // Visualize Tests navigates to /graphs/
+        $("#graphs").click(function() {
+            console.log("view graphs")
+            window.open("http://localhost:5000/graphs", "_self")
+        });
+        
+        // Modify the table HTML to match the current sorting
+        // of the test list
+        function iterate(test, index) { 
+            index += 1
+
+            // Extra validation needed for end, must display if
+            // this is current test, otherwise show end time
+            var end = document.getElementById(index + '-end')
+            var endText = test.end
+
+            if (test.end == null) {
+                endText = "In Progress"
+                end.style.fontWeight = '600'
+                end.style.color = 'dark-grey'
+            } else
+                end.style.fontWeight = ''
+
+            // Set the values based on the current test index
+            document.getElementById(index + '-id').innerHTML = test.id
+            document.getElementById(index + '-id').style.fontWeight = '600'
+            document.getElementById(index + '-cfg').innerHTML = test.config
+            document.getElementById(index + '-locustfile').innerHTML = test.locustfile
+            document.getElementById(index + '-start').innerHTML = test.start
+            document.getElementById(index + '-end').innerHTML = endText
+            document.getElementById(index + '-workers').innerHTML = test.workers
+        }
+
+        /**
+        * Decrement page counter and update table
+        */
+        $("#prev").click(function()
+        {
+            if (current_page > 1) {
+                current_page--;
+                changePage(current_page);
+            }
+        })
+        
+        /**
+        * Increment page counter and update table
+        */
+        $("#next").click(function()
+        {
+            if (current_page < numPages()) {
+                current_page++;
+                changePage(current_page);
+            }
+        })
+
+        /**
+        * Only show tests within the specified page,
+        * and hide the rest
+        */
+        function changePage(page)
+        {
+            var btn_next = document.getElementById("next")
+            var btn_prev = document.getElementById("prev")
+            var listing_table = document.getElementById("table")
+            var page_span = document.getElementById("page")
+
+            // Validate page
+            if (page < 1) page = 1;
+            if (page > numPages()) page = numPages()
+
+            var bottom = (page-1) * records_per_page
+            var top = page * records_per_page
+
+            // Only show items in the given page
+            for (var i = 1; i <= list.length; i++) {
+                current = document.getElementById(i + "-idx");
+                if (i <= bottom)  // 2 pages < 2
+                    current.style.display = 'none'
+                else if (i > bottom && i <= top)
+                    current.style.display = '' // 2 pages < 4 > 2
+                else if (i > top)  // >= 4
+                    current.style.display = 'none'
+            }
+            
+            // Update page buttons
+            btn_prev.style.opacity = page == 1 ? .5 : 1
+            btn_next.style.opacity = page == numPages() ? .5 : 1
+            btn_prev.style.outline = 'none'
+            btn_next.style.outline = 'none'
+
+            // Deselect selected rows, if any
+            $tableRows.removeClass('selected');
+
+            var info = document.getElementById("shown")
+            if (list.length === 0) {
+                info.innerHTML = "No tests available"
+                btn_prev.style.opacity = .5
+                btn_next.style.opacity = .5
+            } 
+            else info.innerHTML = "Showing tests " + 
+                    (bottom + 1) + "-" + 
+                    Math.min(top, list.length) + 
+                    " of " + list.length
+        }
+
+        function numPages()
+        {
+            return Math.ceil(list.length / records_per_page);
+        }
+
+    })
+</script>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark special-color-dark">
+    <!-- Navbar brand -->
+    <a class="navbar-brand text-white" href="#">Loadtest Manager</a>
+
+    <!-- Navbar items -->
+    <ul class="navbar-nav mr-auto">
+        <a class="dropdown-item text-light" href="http://localhost:5000/graphs/">Visualize Test Results</a>
+    </ul>
+</nav>
+
+<!-- Main Layout -->
+<div  class="content p-3 mb-2 overflow-hidden">
+    <h1>View Test List</h1>
+    <br>
+
+    <!-- Sort table dropdown -->
+    <div class="drop-pair">
+        <div class="main-text drop-lead">Sort by:</div>
+        
+        <div class="dropdown">
+            
+            <button id ="drop-button" class="btn btn-primary btn-small dropdown-toggle px-3" type="button" data-toggle="dropdown"
+            aria-haspopup="true" aria-expanded="false" name="sortBy">None</button>
+            <div class="dropdown-menu">
+                <a id ="drop-item" class="dropdown-item" id="start">Start Time</a>
+                <a class="dropdown-item" id="workers">Workers</a>
+                <a class="dropdown-item" id="id">ID</a>
+            </div>
+        </div>
+
+        <button id="table-refresh"  class="arrow-btn btn-primary z-depth-1" style="margin-top:0.7%"><i class="fa fa-refresh"></i></button>
+       
+    </div>
+
+    <!-- Table of tests -->
+    <div class="row">
+        <div class="col-lg-8 col-md-6">
+            <div class="row">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-center dark-text">Test ID</th>
+                            <th scope="col" class="text-center dark-text">Locustfile</th>
+                            <th scope="col" class="text-center dark-text">Start Time</th>
+                            <th scope="col" class="text-center dark-text">End Time</th>
+                            <th scope="col" class="text-center dark-text">Workers</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table">
+                        {% for test in tests %}
+                                <tr id="{{ loop.index }}-idx" class="table-select">
+                                    <th id="{{ loop.index }}-id" scope="row" class="dark-text">{{ test.id }}</th>
+                                    <td id="{{ loop.index }}-locustfile" class="main-text">{{ test.locustfile }}</td>
+                                    <td id="{{ loop.index }}-start" class="main-text">{{ test.start }}</td>
+                                    <td id="{{ loop.index }}-end" class="main-text">{{ test.end }}</td>
+                                    <td id="{{ loop.index }}-workers" class="main-text">{{ test.workers }}</td>
+                                </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Buttons to increment/decrement table page -->
+            <div class="row">
+                <div class="text-center btn-center" style="margin-left:20%">
+                    <button id="prev" class="list-grp arrow-btn btn-primary z-depth-1"><i class="fa fa-arrow-circle-left"></i></button>
+                    
+                    <div id="shown" class="list-grp bottom-text" style="color:grey;margin-top: 2%;align-self: center;margin-left: 5%;"></div>
+
+                    <button id="next"  class="list-grp arrow-btn btn-primary z-depth-1"><i class="fa fa-arrow-circle-right"></i></button>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Section for test-specific info -->
+        <div class="col-lg-4 col-md-6">
+            <div class="box_section dark-text z-depth-2 text-center small-box">
+                
+                <h5 id="view-test" class="text-uppercase text-center" style="padding-top:10%;"></h5>
+                <br>
+                <div style="width:100%;margin:auto">
+                    <button id="view-summary" type="button" class="btn btn-primary" style="width:250px;opacity:.5">View Test Summary</button>
+                    <br>
+                    <button  id="graphs-id"type="button" class="btn btn-primary"style="width:250px;opacity:.5">View Test Graph</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

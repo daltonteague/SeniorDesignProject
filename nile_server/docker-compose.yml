@@ -1,0 +1,37 @@
+version: '3.7'
+
+volumes:
+  # for persistence between restarts
+  postgres_data: {}
+
+services:
+  db:
+    image: postgres:9.6.17
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dbpw
+      POSTGRES_DB: loadtest_db
+    ports: #make db accessible locally
+      - "127.0.0.1:5432:5432"
+  test_db:
+    image: postgres:9.6.17
+    volumes:
+      - postgres_data:/var/lib/postgresql/test_data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dbpw
+      POSTGRES_DB: testing_db
+    ports: #make db accessible locally
+      - "127.0.0.1:5433:5432"
+  prod_db:
+    image: postgres:9.6.17
+    volumes:
+      - postgres_data:/var/lib/postgresql/prod_data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dbpw
+      POSTGRES_DB: prod_db
+    ports: #make db accessible locally
+      - "127.0.0.1:5434:5432"

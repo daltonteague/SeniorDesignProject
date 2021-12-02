@@ -1,0 +1,14 @@
+# Pycache stuff
+__pycache__
+*/__pycache__
+*.pyc
+.workers.py.swp
+
+# VS Code stuff
+.vscode
+settings.json
+
+# Misc
+.coverage
+.DS_Store
+.python-version

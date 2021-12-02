@@ -1,0 +1,24 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+flask = "*"
+flask-sqlalchemy = "*"
+flask-migrate = "*"
+psycopg2-binary = "*"
+flask-script = "*"
+selenium = "*"
+nose2 = "*"
+flask-testing = "*"
+flask-marshmallow = "==0.11.0"
+marshmallow-sqlalchemy = "*"
+requests = "*"
+docker-compose = "*"
+coverage = "*"
+
+[requires]
+python_version = "3.7"

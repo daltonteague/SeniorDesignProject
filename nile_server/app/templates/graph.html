@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{% endblock %}
+
+{% block body %}
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark special-color-dark">
+    <!-- Navbar brand -->
+    <a class="navbar-brand" href="#">Loadtest Manager</a>
+
+    <!-- NavBar Items -->
+    <ul class="navbar-nav mr-auto">
+        <a class="dropdown-item text-light" href="http://localhost:5000/tests/">View Test List</a>
+    </ul>
+    <!-- NavBar Items -->
+
+</nav>
+<!-- Navbar -->
+
+<!--Main Layout-->
+<main>
+    <div class="content p-3 mb-2 overflow-hidden">
+        <h1>Visualize Test Results</h1>
+    </div>
+    
+    <div class="container" style="position:static">
+        <div class="row">
+                <div class="btn-group" role="group" aria-label="Results Option">
+                    <button type="button" class="btn btn-primary" onclick="showRequests()" style="max-height: 50px;">Locust Results</button>
+                    <button type="button" class="btn btn-primary" onclick="showMetrics()" style="max-height: 50px;">System Metrics</button>
+                </div>
+            
+            
+        </div>
+        <div class="row pt-3">
+
+            <div class="col-md-3">
+
+                <div class="row justify-content-center">
+                    <label class="main-text">Find Tests:</label>
+                </div>
+                <div class="row justify-content-center">
+                    <label class="list-text">From:</label>
+                    <input data-date-format="mm/dd/yyyy" id="datepickerFrom" name="foo" class="date-pair" style="max-width: 100px;">
+                </div>
+
+                <div class="row justify-content-center">
+                    <label class="list-text" >To:</label>
+                    <input data-date-format="mm/dd/yyyy" data-date-end-date="0d" id="datepickerTo" class="date-pair" style="max-width: 100px;margin-left: 9%;">
+                </div>
+
+              <div class="row-5 pt-3">
+                <div style="height:300px; width:250px;line-height:3em;overflow:auto;padding:5px;border-style: solid;border-color: rgb(220, 222, 231);border-width: 2px;">
+                    {% for test in tests %}
+                    <ul class="list-group" id="test-table">
+                        <li class="list-group-item list-select" id="{{ test.id }}">
+                            <div class="list-text dark-text"  id="{{ loop.index }}-id">Test {{ test.id }}</div>
+                            <div class="list-text">
+                                <a class="dark-text">Workers: </a>
+                                {{ test.workers }}
+                            </div>
+                            <div class="list-text">
+                                <a class="dark-text">Completed: </a>
+                                <a id="{{ test.id }}-end">{{ test.end }}</a>
+                            </div>
+                        </li>
+                    </ul>
+                    {% endfor %}
+                </div>
+              </div>
+
+            </div>
+
+            <div class="col-md-7 chart">
+                <div id="plot"></div>
+            </div>
+            
+
+        </div>
+    </div>
+
+    <script type="text/javascript">
+
+        
+        // Get list of tests and requests from Flask as JSON
+        var tests = {{ tests|tojson }};
+        var $listRows = $('.list-select'); 
+        var $selectedTest = ""
+        var $responseTimes = []
+        var $timestamps = []
+
+        /**
+        * When the window loads, display the chart from the
+        * most recent test data
+        */ 
+        window.onload = function() {
+            if (tests.length <= 0) return 0
+            var id = {{ selected }}
+
+            // If user selected a test to visualize, load chart
+            // with that id. Otherwise, grab the most recent test
+            // available
+            if (tests[tests.length - id]) {
+                document.getElementById(id).click()
+            } else {
+                document.getElementById(tests[0].id).click()
+            }
+
+            filterTests()
+        }
+        
+        /**
+        * Initialize datepickers and re-filter tests when updated
+        */ 
+        $('#datepickerFrom, #datepickerTo').datepicker({
+            weekStart: 1,
+            daysOfWeekHighlighted: "6,0",
+            autoclose: true,
+            todayHighlight: true,
+            buttonText: "From date",
+        }).on("changeDate", function (e) {
+            filterTests()
+        });
+        $('#datepickerFrom').datepicker("setDate", Date.parse(tests[tests.length - 1].start))
+        $('#datepickerTo').datepicker("setDate", moment().endOf('day').format("MMMM Do YYYY"))
+
+
+        /**
+        * Filter the tests displayed based on the date picker
+        */ 
+        function filterTests() {
+
+            var startDate = $('#datepickerFrom').datepicker('getDate')
+            var endDate = moment($('#datepickerTo').datepicker('getDate')).hours(23).minutes(59).seconds(59)
+
+            for(var i = 0; i < tests.length; i++) {
+
+                id = tests[i].id
+                start = Date.parse(tests[i].start)
+                if (tests[i].end != null) end = Date.parse(tests[i].end).toLocaleString()
+                else end = "Not Complete"
+
+                document.getElementById(id + '-end').innerHTML = end;
+                if (start >= startDate && start <= endDate) {
+                    document.getElementById(id).style.display = '';
+                } else {
+                    document.getElementById(id).style.display = 'none';
+                }
+            }
+        }
+
+        /**
+        * Highlight a selected a test in the table and update
+        * the chart
+        */ 
+        $('.list-select').click(function(e) {
+            $.ajax({
+                url: "http://localhost:5000/api/v1/requests/test/" + this.id,
+                type: 'GET',
+                success: function(res) {
+                    createChart(this.id, true, JSON.parse(res))
+                }
+            });
+
+            $listRows.removeClass('active')
+            $(this).addClass('active')
+            
+            $selectedTest = tests[tests.length - this.id]
+        });
+
+        /**
+        * Creates a chart with the given requests variable,
+        * which consists of 2 nested arrays of request timestsamps
+        * and response times.
+        */ 
+        function createChart(id, newTest, requests) {
+
+            var $timestamps = requests['timestamps']
+            var $responseTimes = requests['response_times']
+
+            console.log($timestamps.length)
+
+            var data = {
+                x: $timestamps,
+                y: $responseTimes,
+                mode: 'lines'
+            }
+
+            var layout = {
+                showlegend: false,
+                height: 600,
+                width: 600,
+                paper_bgcolor:'rgba(0,0,0,0)',
+                plot_bgcolor:'rgba(0,0,0,0)',
+                modebar: {
+                    bgcolor: 'white'
+                },
+                margin: {
+                    t: 60,
+                    b: 100
+                }
+            };
+
+            Plotly.newPlot('plot', [data], layout, {displayModeBar: true, displaylogo: false});
+        }
+
+        
+        function showRequests() {
+            var x = document.getElementById("test-group")
+            var y = document.getElementById("test-group-2")
+            if (x.style.display === "none") {
+                x.style.display = "block"
+                y.style.display = "none"
+            }
+        }
+        function showMetrics() {
+            var x = document.getElementById("test-group-2")
+            var y = document.getElementById("test-group")
+            if (x.style.display === "none") {
+                x.style.display = "block"
+                y.style.display = "none"
+            }
+        }
+    </script>
+</main>
+<!--Main Layout-->
+
+{% endblock %}

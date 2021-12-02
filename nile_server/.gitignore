@@ -1,0 +1,5 @@
+/migrations/
+/__pycache__/
+.pyc
+app/__pycache__/
+/htmlcov/

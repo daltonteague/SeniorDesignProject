@@ -1,0 +1,198 @@
+body {
+    margin: 5;
+}
+
+/* *{ border: 1px solid red; } */
+
+html, body {
+    height:100%;
+}
+
+h1, h2, h3 {
+    text-align: center;
+}
+
+table {
+    margin: auto;
+    margin-top: 3%;
+    max-width: 80%;
+}
+
+.content {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.box_section {
+    background-color: white;
+    padding: 2%;
+    margin: 2%;
+}
+
+.box_section_inner {
+    display: flex;
+    background-color: white;
+    padding-top: 2%;
+    padding-bottom: 2%;
+    margin: 4%;
+    width: 100%;
+    height: 100%;
+}
+
+.small-box {
+    height:250px;
+    max-width: 350px;
+}
+
+.main-text {
+    color: rgb(73, 73, 87);
+    font-weight: 400;
+    font-size: 14px;
+    padding-bottom: 4px;
+}
+
+.padded {
+    padding-right: 4px;
+}
+
+.centered {
+    text-align: center;
+}
+
+.bottom-text {
+    color: rgb(73, 73, 87);
+    font-weight: 400;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.list-text {
+    color: rgb(73, 73, 87);
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 15px;
+}
+
+.text-group {
+    padding-bottom: 6px;
+}
+
+.dark-text {
+    color: rgb(15, 15, 15);
+    font-weight: 600;
+}
+
+.selected {
+    background-color: rgb(229, 230, 243);
+
+    font-weight: 600 !important;
+}
+
+.active {
+    background-color: rgb(219, 219, 219) !important;
+}
+
+.arrow-btn {
+    border: none; /* Remove borders */
+    border-radius: 12px;
+    color: white; /* White text */
+    padding: 0px 16px; /* Some padding */
+    font-size: 32px; /* Set a font size */
+    cursor: pointer; /* Mouse pointer on hover */
+    height: 45px;
+    margin-left: 5%;
+}
+
+.icon-btn {
+    border: none; /* Remove borders */
+    color: white; /* White text */
+    padding: 0px 20px; /* Some padding */
+    font-size: 25px; /* Set a font size */
+    cursor: pointer; /* Mouse pointer on hover */
+    height: 45px;
+    width: 70px;
+    margin-left: 5%;
+    align-items: center;
+    border-radius: 12px;
+}
+
+.btn-middle {
+    border: none; /* Remove borders */
+    color: white; /* White text */
+    padding: 0px 20px; /* Some padding */
+    cursor: pointer; /* Mouse pointer on hover */
+    height: 45px;
+    width:250px;
+    margin-left: 5%;
+    vertical-align: top;
+}
+
+.btn-center {
+    margin:0 auto;
+    margin-top:2%;
+    width:600px
+}
+
+.btn-bottom {
+    margin:0 auto;
+    margin-top:5%;
+    height: 45px;
+    padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.drop-pair {
+    display: flex;
+    flex-direction: row;
+}
+.drop-lead {
+    padding-top:2%;
+    margin-left:5%;
+    margin-right:2%
+}
+
+.list-grp {
+    float: left;
+}
+
+@media (max-width: 980px) {
+    .chart {
+        max-width: 400px;
+        margin-left: 7%;
+        margin-top: -7%;
+    }
+}
+
+@media (min-width: 980px) {
+    .chart {
+        min-width: 650px;
+        margin-left: 7%;
+        margin-top: -7%;
+    }
+}
+
+.js-plotly-plot .plotly .modebar {
+    margin-right: 20%;
+}
+
+canvas{
+    height:400px !important;
+  }
+
+.btn-pair {
+    margin-left: 2%;
+}
+
+.date-pair {
+    margin-top: -3%;
+    margin-left:2%;
+    margin-bottom: 5%;;
+}
+
+.bootstrap-datetimepicker-widget.timepicker-picker table td,
+.bootstrap-datetimepicker-widget.timepicker-picker table td span,
+.bootstrap-datetimepicker-widget.timepicker-picker table td a span
+{height: 30px; line-height: 30px; width: 30px; padding:0px;}
